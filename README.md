@@ -45,7 +45,7 @@ Pretrained models can be found in ```Self-Supervised Training with Noise2Self/no
 
 We suggest taking a similar approach to our paper when denoising in your applications. Using ```FMD_epoch50_model```, continue to train with noisy and clean image pairs from your specific domain.
 
-### Contact
+## Contact
 
 Questions/concerns should be initiated via Issues. For ideas/potential collaborations/etc. feel free to reach out at [bo.huang@ucsf.edu](bo.huang@ucsf.edu). See our [website](huanglab.ucsf.edu) for information about other projects.
 
