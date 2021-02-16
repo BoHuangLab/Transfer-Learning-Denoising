@@ -1,27 +1,35 @@
+#from https://github.com/czbiohub/noise2self/blob/master/models/unet.py
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 from models.modules import ConvBlock
 
 
 class Unet(nn.Module):
-    def __init__(self, n_channel_in=1, n_channel_out=1, residual=False, down='conv', up='tconv', activation='selu'):
+    def __init__(
+        self,
+        n_channel_in=1,
+        n_channel_out=1,
+        residual=False,
+        down="conv",
+        up="tconv",
+        activation="selu",
+    ):
         super(Unet, self).__init__()
 
         self.residual = residual
 
-        if down == 'maxpool':
+        if down == "maxpool":
             self.down1 = nn.MaxPool2d(kernel_size=2)
             self.down2 = nn.MaxPool2d(kernel_size=2)
             self.down3 = nn.MaxPool2d(kernel_size=2)
             self.down4 = nn.MaxPool2d(kernel_size=2)
-        elif down == 'avgpool':
+        elif down == "avgpool":
             self.down1 = nn.AvgPool2d(kernel_size=2)
             self.down2 = nn.AvgPool2d(kernel_size=2)
             self.down3 = nn.AvgPool2d(kernel_size=2)
             self.down4 = nn.AvgPool2d(kernel_size=2)
-        elif down == 'conv':
+        elif down == "conv":
             self.down1 = nn.Conv2d(32, 32, kernel_size=2, stride=2, groups=32)
             self.down2 = nn.Conv2d(64, 64, kernel_size=2, stride=2, groups=64)
             self.down3 = nn.Conv2d(128, 128, kernel_size=2, stride=2, groups=128)
@@ -37,12 +45,12 @@ class Unet(nn.Module):
             self.down3.bias.data = 0.01 * self.down3.bias.data + 0
             self.down4.bias.data = 0.01 * self.down4.bias.data + 0
 
-        if up == 'bilinear' or up == 'nearest':
+        if up == "bilinear" or up == "nearest":
             self.up1 = lambda x: nn.functional.interpolate(x, mode=up, scale_factor=2)
             self.up2 = lambda x: nn.functional.interpolate(x, mode=up, scale_factor=2)
             self.up3 = lambda x: nn.functional.interpolate(x, mode=up, scale_factor=2)
             self.up4 = lambda x: nn.functional.interpolate(x, mode=up, scale_factor=2)
-        elif up == 'tconv':
+        elif up == "tconv":
             self.up1 = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2, groups=256)
             self.up2 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2, groups=128)
             self.up3 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2, groups=64)

@@ -229,7 +229,7 @@ class Imagesequence_generator(ks.utils.Sequence):
         return input, target
 
 
-###
+# Normalize Images based on given min and max
 
 
 def normalize(

@@ -3,17 +3,17 @@ import math
 import tifffile as tiff
 import numpy as np
 import torch
-import json
+#import json
 import scipy.io as sio
 
 
 from util import normalize
-from torchvision import transforms
 from torch.utils.data import DataLoader
-from skimage import img_as_float
+
+gainmap_dir = os.path.dirname(os.path.dirname(os.getcwd()))
 
 
-gainmap_dir = r'/home/yina/DeepDenoising/Data/Confocal/gaincalibration.mat'
+gainmap_dir = gainmap_dir + r'/Data/Confocal/gaincalibration.mat'
 
 
 def tiff_loader(path):
@@ -28,7 +28,7 @@ def randompatch(data_shape, patch_size):
     np.random.seed(0)
     nx, ny = data_shape[-2], data_shape[-1]
     rx = int(np.random.randint(0, high=nx-patch_size, size=1, dtype=int))
-    ry = int(np.random.randint(0, high=nx-patch_size, size=1, dtype=int))
+    ry = int(np.random.randint(0, high=ny-patch_size, size=1, dtype=int))
     return rx, ry
 
 
@@ -46,12 +46,13 @@ def addnoise(data, signals, gain_map=None, readnoise_map=None):
         noisy dataset with the same shape with input clean data
     """
     nx, ny = data.shape[-2:]
-    nsample = data.shape[0]
-    if gain_map == None or readnoise_map == None:
+
+    if gain_map is None or readnoise_map is None:
+        
         fmat_gain = sio.loadmat(gainmap_dir)
         gain_map = fmat_gain['gain']
         readnoise_map = fmat_gain['ccdvar']
-    
+        
     assert nx <= gain_map.shape[0] and ny <= gain_map.shape[1]
 
     rx, ry = randompatch(gain_map.shape, ny)
@@ -68,18 +69,18 @@ def addnoise(data, signals, gain_map=None, readnoise_map=None):
         readnoise = [np.random.normal(0, np.sqrt(r), (1)) for r in np.nditer(readnoise_map)]
         readnoise = np.reshape(readnoise, data.shape)
         data_noise = np.random.poisson(data.numpy() * signal * gain_map) + readnoise
-        noisy.append(data_noise) 
+        noisy.append(data_noise)
     if len(signals) > 1:
         noisy = np.stack(noisy, axis=0)
     else:
         noisy = noisy[0]
-    noisy = normalize(noisy, clip = True)
+    noisy = normalize(noisy, clip=True)
 
     return torch.from_numpy(noisy)
 
 
 def randomcrop(data, patch_size):
-    data = normalize(data, clip = True)
+    data = normalize(data, clip=True)
 
     print(data.shape)
     if data.shape[-2] == patch_size and data.shape[-1] == patch_size:
@@ -87,7 +88,7 @@ def randomcrop(data, patch_size):
         img = data
         img = img.squeeze(axis=1)
         img = np.expand_dims(img, axis=1)
-        img = normalize(img, clip = True)
+        img = normalize(img, clip=True)
         return torch.from_numpy(img)
     elif data.shape[-2] < patch_size or data.shape[-1] < patch_size:
         return None
@@ -103,7 +104,7 @@ def randomcrop(data, patch_size):
         img = data[..., rx:rx+patch_size, ry:ry+patch_size]
         img = img.squeeze(axis=1)
         img = np.expand_dims(img, axis=1)
-        img = normalize(img, clip = True)
+        img = normalize(img, clip=True)
 
         return torch.from_numpy(img)
 
@@ -113,7 +114,7 @@ class ConfocalDataset(torch.utils.data.Dataset):
         super().__init__()
 
         self.noisy = data[0]
-        self.clean = data[1]        
+        self.clean = data[1]      
 
     def __getitem__(self, index):
         """
@@ -122,7 +123,7 @@ class ConfocalDataset(torch.utils.data.Dataset):
         Returns:
             tuple: (noisy, clean)
         """
-        return self.noisy[index,:], self.clean[index,:]
+        return self.noisy[index ,:], self.clean[index ,:]
 
     def __len__(self):
         return self.noisy.shape[0]
@@ -136,10 +137,10 @@ def gather_files(root, sample_size, split_ratio, types, train=True):
                if (os.path.isdir(os.path.join(root, name+'/')) and name in types)]
 
     for subdir in subdirs:
-        file_counts = len([name for name in os.listdir(subdir) if name[-4:]=='.tif'])
+        file_counts = len([name for name in os.listdir(subdir) if name[-4:] == '.tif'])
         file_index = math.ceil(file_counts*split_ratio)
 
-        startfile = 0
+        start_file = 0
         file_to_use = 0
         if train:
             start_file = file_index + 1
@@ -179,7 +180,7 @@ def load_confocal(root, train, batch_size, psignal_levels, sample_size, split_ra
     """
     transform = randomcrop
     all_types = ['DNA', 'lysosome', 'microtubule', 'mitochondria']
-    if types is 'all':
+    if types == 'all':
         types = all_types
     else:
         assert all([img_type in all_types for img_type in types])
@@ -189,26 +190,26 @@ def load_confocal(root, train, batch_size, psignal_levels, sample_size, split_ra
     clean = loader(clean_file)
     #print("shape of loaded data:", clean.shape)
     if sample_size == 1:
-       clean = np.expand_dims(clean,axis=0)
+       clean = np.expand_dims(clean, axis=0)
     if transform is not None:
-       clean = transform(clean[:,0:captures,:], patch_size)
+       clean = transform(clean[:, 0:captures, :], patch_size)
 
-    noisy = addnoise(clean, psignal_levels, gain_map=gain_map, readnoise_map=readnoise_map) 
+    noisy = addnoise(clean, psignal_levels, gain_map=gain_map, readnoise_map=readnoise_map)
     if len(psignal_levels) > 1:
-       clean = np.repeat(clean, len(psignal_levels), axis=0)
+        clean = np.repeat(clean, len(psignal_levels), axis=0)
     assert noisy.shape == clean.shape
 
-    dataset_info = {'Dataset': 'train' if train else 'test',
-                        'Peak signal levels': psignal_levels,
-                        f'{len(types)} Types': types,
-                        '# samples': len(clean_file)
-                        }
+    #dataset_info = {'Dataset': 'train' if train else 'test',
+    #                    'Peak signal levels': psignal_levels,
+    #                    f'{len(types)} Types': types,
+    #                    '# samples': len(clean_file)
+    #                    }
     #print(json.dumps(dataset_info, indent=4))
         
     dataset = ConfocalDataset([noisy, clean])
     kwargs = {'num_workers': 4, 'pin_memory': True} \
-              if torch.cuda.is_available() else {}
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
-                  shuffle=True, drop_last=False, **kwargs)
+        if torch.cuda.is_available() else {}
+    data_loader = DataLoader(dataset, batch_size=batch_size,
+            shuffle=True, drop_last=False, **kwargs)
 
     return data_loader, [noisy, clean]

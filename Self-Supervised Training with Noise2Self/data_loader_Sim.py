@@ -1,24 +1,20 @@
 import os
-import math
-import tifffile as tiff
 import numpy as np
 import torch
-import json
 import scipy.io as sio
 import scipy.ndimage as ip
 
 
-from util import normalize, axes_dict_datasize, structure_axes
-from torchvision import transforms
+from util import normalize, structure_axes
 from torch.utils.data import DataLoader
-from skimage import img_as_float
 from data_loader import randompatch
 
 import structures
 from structures import microtubule
 
 
-gainmap_dir = r'/home/yina/DeepDenoising/Data/Confocal/gaincalibration.mat'
+gainmap_dir = os.path.dirname(os.path.dirname(os.getcwd()))
+gainmap_dir = gainmap_dir + r'/Data/Confocal/gaincalibration.mat'
 
 
 def addnoise(data, signals, gain_map=None, readnoise_map=None):
@@ -27,7 +23,7 @@ def addnoise(data, signals, gain_map=None, readnoise_map=None):
         data: 	    clean data source, with the last two dimensions X and Y
         signals:    e.g. [10, 20, 100], for rescale image intensity to add poisson noise
                     FIXME: currently only works for single signal level; 
-			   output tensor dimension mismatch if input multiple signal level
+			        output tensor dimension mismatch if input multiple signal level
         gain_map:   	 optional, sCMOS gain map: if None, load it from disk (512x512)
         readnoise_map:   optional, sCMOS readnoise map: if None, load it from disk (512x512)
 
@@ -35,12 +31,11 @@ def addnoise(data, signals, gain_map=None, readnoise_map=None):
         noisy dataset with the same shape with input clean data
     """
     nx, ny = data.shape[-2:]
-    nsample = data.shape[0]
-    if gain_map == None or readnoise_map == None:
+    if gain_map is None or readnoise_map is None:
         fmat_gain = sio.loadmat(gainmap_dir)
         gain_map = fmat_gain['gain']
         readnoise_map = fmat_gain['ccdvar']
-    
+        
     assert nx <= gain_map.shape[0] and ny <= gain_map.shape[1]
 
     rx, ry = randompatch(gain_map.shape, ny)
@@ -58,12 +53,12 @@ def addnoise(data, signals, gain_map=None, readnoise_map=None):
         readnoise = [np.random.normal(0, np.sqrt(r), (1)) for r in np.nditer(readnoise_map)]
         readnoise = np.reshape(readnoise, data.shape)
         data_noise = np.random.poisson(data * signal * gain_map) + readnoise
-        noisy.append(data_noise) 
+        noisy.append(data_noise)
     if len(signals) > 1:
         noisy = np.stack(noisy, axis=0)
     else:
         noisy = noisy[0]
-    noisy = normalize(noisy, clip = True)
+    noisy = normalize(noisy, clip=True)
 
     return torch.from_numpy(noisy)
 
@@ -78,8 +73,8 @@ class ConfocalDataset(torch.utils.data.Dataset):
         self.signal = psignal_levels
 
         # simulation parameters
-        self.maxmove = 3 # pixel
-        self.labeldensity = 40 # probes per pixel
+        self.maxmove = 3  # pixel
+        self.labeldensity = 40  # probes per pixel
         # Guassian PSF
         self.sigma = 1  # pixel
         self.psf = structures.gaussian_psf(self.sigma)  # generate 2D psf
@@ -94,7 +89,7 @@ class ConfocalDataset(torch.utils.data.Dataset):
         # on the fly simulation
         clean = np.zeros(self.datasize[1::])
         noisy = np.zeros(self.datasize[1::])
-        index_signal = [self.signal[np.random.randint(0,len(self.signal))]]
+        index_signal = [self.signal[np.random.randint(0, len(self.signal))]]
 
         im = np.zeros(self.datasize[2:])
         for s in self.structures:
@@ -131,8 +126,8 @@ def load_simulation(batch_size, datasize, axes, structures, psignal_levels, save
 
     dataset = ConfocalDataset(datasize, axes, structures, psignal_levels)
     kwargs = {'num_workers': 4, 'pin_memory': True} \
-              if torch.cuda.is_available() else {}
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
-                  shuffle=True, drop_last=False, **kwargs)
+                if torch.cuda.is_available() else {}
+    data_loader = DataLoader(dataset, batch_size=batch_size,
+                            shuffle=True, drop_last=False, **kwargs)
 
     return data_loader

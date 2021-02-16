@@ -4,13 +4,17 @@ import torch.nn.functional as F
 import collections
 
 from numpy import clip, exp
-from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
 
-def expand(x, r):
-    return np.repeat(np.repeat(x, r, axis = 0), r, axis = 1)
 
-def show_tensor(tensor, cmap='magma', scale=False):
+def expand(x, r):
+    return np.repeat(np.repeat(x, r, axis=0), r, axis=1)
+
+
+def show_tensor(tensor, cmap="magma", scale=False):
+
+    """Display Tensors"""
+
     im = tensor.numpy()
     if scale:
         im = im / im.max()
@@ -39,14 +43,13 @@ def tensor_to_numpy(x):
 
 
 def plot_tensors(tensor_list, titles=None):
-    color = True if tensor_list[0].shape[1] == 3 else False
     image_list = [tensor_to_numpy(tensor) for tensor in tensor_list]
     width = len(image_list)
-    fig, ax = plt.subplots(1, width, sharex='col', sharey='row', figsize=(width * 4, 4))
+    fig, ax = plt.subplots(1, width, sharex="col", sharey="row", figsize=(width * 4, 4))
 
     for i in range(width):
         if image_list[i].ndim == 2:
-            ax[i].imshow(image_list[i], cmap='Greys_r')
+            ax[i].imshow(image_list[i], cmap="Greys_r")
         else:
             ax[i].imshow(image_list[i])
         if titles:
@@ -54,6 +57,7 @@ def plot_tensors(tensor_list, titles=None):
         ax[i].get_xaxis().set_ticks([])
         ax[i].get_yaxis().set_ticks([])
     fig
+
 
 def show_data(datapt):
     # For datasets of the form (noise1, noise2, ground truth), shows all three concatenated
@@ -70,17 +74,19 @@ def plot_grid(images, height, width, **kwargs):
         images = np.concatenate([im[np.newaxis] for im in images])
     assert images.shape[0] >= width * height
 
-    if 'cmap' not in kwargs:
-        kwargs['cmap'] = 'Greys_r'
+    if "cmap" not in kwargs:
+        kwargs["cmap"] = "Greys_r"
 
-    images = images[:width * height]
-    fig, ax = plt.subplots(height, width, sharex='col', sharey='row', figsize=(width * 4, height * 4))
+    images = images[: width * height]
+    fig, ax = plt.subplots(
+        height, width, sharex="col", sharey="row", figsize=(width * 4, height * 4)
+    )
     image_grid = images.reshape(height, width, images.shape[1], images.shape[2])
 
     # axes are in a two-dimensional array, indexed by [row, col]
     for i in range(height):
         for j in range(width):
-            if (height > 1):
+            if height > 1:
                 ax[i, j].imshow(image_grid[i, j], **kwargs)
                 ax[i, j].get_xaxis().set_ticks([])
                 ax[i, j].get_yaxis().set_ticks([])
@@ -90,11 +96,14 @@ def plot_grid(images, height, width, **kwargs):
                 ax[j].get_yaxis().set_ticks([])
     fig
 
+
 def show(image, **kwargs):
     import matplotlib.pyplot as plt
+
     plt.imshow(image, cmap=plt.cm.gray, **kwargs)
     plt.gca().get_xaxis().set_ticks([])
     plt.gca().get_yaxis().set_ticks([])
+
 
 def plot_images(image_list, **kwargs):
     images = np.concatenate([im[np.newaxis] for im in image_list])
@@ -116,29 +125,34 @@ def random_noise(img, params):
 
     noisy = img
 
-    if params['mode'] == 'poisson' or params['mode'] == 'gaussian_poisson':
-        noisy = torch.poisson(noisy * params['photons_at_max']) / params['photons_at_max']
+    if params["mode"] == "poisson" or params["mode"] == "gaussian_poisson":
+        noisy = (
+            torch.poisson(noisy * params["photons_at_max"]) / params["photons_at_max"]
+        )
 
-    if params['mode'] == 'gaussian' or params['mode'] == 'gaussian_poisson':
-        noise = torch.randn(img.size()).to(img.device) * params['std']
+    if params["mode"] == "gaussian" or params["mode"] == "gaussian_poisson":
+        noise = torch.randn(img.size()).to(img.device) * params["std"]
         noisy = noise + noisy
 
-    if params['mode'] == 'bernoulli':
-        noisy = noisy * torch.bernoulli(torch.ones(noisy.shape) * params['p'])
+    if params["mode"] == "bernoulli":
+        noisy = noisy * torch.bernoulli(torch.ones(noisy.shape) * params["p"])
 
-    if 'clamp' in params and params['clamp']:
+    if "clamp" in params and params["clamp"]:
         noisy = torch.clamp(noisy, 0, 1)
 
     return noisy
 
 
 def test_bernoulli_noise():
+    
+    '''Add Bernoulli Noise to image'''
+    
     torch.manual_seed(2018)
     p = 0.2
     shape = (10, 1, 100, 100)
     n = 10 * 100 * 100
     img = torch.ones(shape)
-    noisy = random_noise(img, {'mode': 'bernoulli', 'p': p})
+    noisy = random_noise(img, {"mode": "bernoulli", "p": p})
 
     var = n * p * (1 - p)
 
@@ -146,16 +160,18 @@ def test_bernoulli_noise():
 
 
 def psnr(x, x_true, max_intensity=1.0, pad=None, rescale=False):
-    '''A function computing the PSNR of a noisy tensor x approximating a tensor x_true.
+    """A function computing the PSNR of a noisy tensor x approximating a tensor x_true.
 
     It vectorizes over the batch.
 
     PSNR := 10*log10 (MAX^2/MSE)
 
     where the MSE is the averaged squared error over all pixels and channels.
-    '''
+    """
 
-    return 10 * torch.log10((max_intensity ** 2) / mse(x, x_true, pad=pad, rescale=rescale))
+    return 10 * torch.log10(
+        (max_intensity ** 2) / mse(x, x_true, pad=pad, rescale=rescale)
+    )
 
 
 def test_psnr():
@@ -201,7 +217,12 @@ def mse(x, y, pad=None, rescale=False):
 
 
 def gaussian(window_size, sigma):
-    gauss = torch.Tensor([exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
+    gauss = torch.Tensor(
+        [
+            exp(-((x - window_size // 2) ** 2) / float(2 * sigma ** 2))
+            for x in range(window_size)
+        ]
+    )
     return gauss / gauss.sum()
 
 
@@ -220,14 +241,23 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
 
-    sigma1_sq = F.conv2d(img1 * img1, window, padding=window_size // 2, groups=channel) - mu1_sq
-    sigma2_sq = F.conv2d(img2 * img2, window, padding=window_size // 2, groups=channel) - mu2_sq
-    sigma12 = F.conv2d(img1 * img2, window, padding=window_size // 2, groups=channel) - mu1_mu2
+    sigma1_sq = (
+        F.conv2d(img1 * img1, window, padding=window_size // 2, groups=channel) - mu1_sq
+    )
+    sigma2_sq = (
+        F.conv2d(img2 * img2, window, padding=window_size // 2, groups=channel) - mu2_sq
+    )
+    sigma12 = (
+        F.conv2d(img1 * img2, window, padding=window_size // 2, groups=channel)
+        - mu1_mu2
+    )
 
     C1 = 0.01 ** 2
     C2 = 0.03 ** 2
 
-    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / (
+        (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
+    )
 
     if size_average:
         return ssim_map.mean()
@@ -273,6 +303,7 @@ def normalize_mi_ma(x, mi, ma, clip=False, eps=1e-20, dtype=np.float32):
 
     try:
         import numexpr
+
         x = numexpr.evaluate("(x - mi) / ( ma - mi + eps )")
     except ImportError:
         x = (x - mi) / (ma - mi + eps)
@@ -284,11 +315,13 @@ def normalize_mi_ma(x, mi, ma, clip=False, eps=1e-20, dtype=np.float32):
 
 
 def addnoise(data, signal, gaussnoise):
-    data_noise = np.random.poisson(data * signal) + np.random.normal(0,gaussnoise, data.shape)
-    return normalize(data_noise, clip = True)
+    data_noise = np.random.poisson(data * signal) + np.random.normal(
+        0, gaussnoise, data.shape
+    )
+    return normalize(data_noise, clip=True)
 
 
-class PercentileNormalizer():
+class PercentileNormalizer:
     """Percentile-based image normalization.
     Parameters
     ----------
@@ -318,13 +351,16 @@ class PercentileNormalizer():
         Note that percentiles are computed individually for each channel (if present in `axes`).
         """
         axes = tuple((d for d in range(img.ndim) if d != channel))
-        self.mi = np.percentile(img, self.pmin, axis=axes, keepdims=True).astype(self.dtype, copy=False)
-        self.ma = np.percentile(img, self.pmax, axis=axes, keepdims=True).astype(self.dtype, copy=False)
+        self.mi = np.percentile(img, self.pmin, axis=axes, keepdims=True).astype(
+            self.dtype, copy=False
+        )
+        self.ma = np.percentile(img, self.pmax, axis=axes, keepdims=True).astype(
+            self.dtype, copy=False
+        )
         return normalize_mi_ma(img, self.mi, self.ma, dtype=self.dtype, **self.kwargs)
 
     def denormalize(self, mean):
-        """Undo percentile-based normalization to map restored image to similar range as input image.
-        """
+        """Undo percentile-based normalization to map restored image to similar range as input image."""
         alpha = self.ma - self.mi
         beta = self.mi
         return alpha * mean + beta
@@ -347,13 +383,18 @@ def test_percentile_normalizer():
 
 def gpuinfo(gpuid):
     import subprocess
-    sp = subprocess.Popen(['nvidia-smi', '-q', '-i', str(gpuid), '-d', 'MEMORY'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    sp = subprocess.Popen(
+        ["nvidia-smi", "-q", "-i", str(gpuid), "-d", "MEMORY"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     out_str = sp.communicate()
-    out_list = out_str[0].decode("utf-8").split('BAR1', 1)[0].split('\n')
+    out_list = out_str[0].decode("utf-8").split("BAR1", 1)[0].split("\n")
     out_dict = {}
     for item in out_list:
         try:
-            key, val = item.split(':')
+            key, val = item.split(":")
             key, val = key.strip(), val.strip()
             out_dict[key] = val
         except:
@@ -362,7 +403,7 @@ def gpuinfo(gpuid):
 
 
 def getfreegpumem(id):
-    return int(gpuinfo(id)['Free'].replace('MiB', '').strip())
+    return int(gpuinfo(id)["Free"].replace("MiB", "").strip())
 
 
 def getbestgpu(maxsearch):
@@ -379,15 +420,12 @@ def getbestgpu(maxsearch):
 def get_args():
     global args
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("config_files",
-                        help="configuration file for experiment.",
-                        type=str,
-                        nargs='+')
-    parser.add_argument("--device",
-                        help="cuda device",
-                        type=str,
-                        required=True)
+    parser.add_argument(
+        "config_files", help="configuration file for experiment.", type=str, nargs="+"
+    )
+    parser.add_argument("--device", help="cuda device", type=str, required=True)
     args = parser.parse_args()
 
 
@@ -395,31 +433,53 @@ def get_args():
 def _raise(e):
     raise e
 
+
 # https://docs.python.org/3/library/itertools.html#itertools-recipes
 def consume(iterator):
     collections.deque(iterator, maxlen=0)
 
-def axes_check_and_normalize(axes,disallowed=None,mustexist='SYX', return_allowed=False):
+
+def axes_check_and_normalize(
+    axes, disallowed=None, mustexist="SYX", return_allowed=False
+):
     """
     S(ample),  C(hannel),T(ime), Z, Y, X
     """
-    allowed = 'SCTZYX'
-    axes is not None or _raise(ValueError('axis cannot be None.'))
+    allowed = "SCTZYX"
+    axes is not None or _raise(ValueError("axis cannot be None."))
     axes = str(axes).upper()
-    consume(a in allowed or _raise(ValueError("invalid axis '%s', must be one of %s."%(a,list(allowed)))) for a in axes)
-    disallowed is None or consume(a not in disallowed or _raise(ValueError("disallowed axis '%s'."%a)) for a in axes)
-    mustexist is None or consume(a in axes or _raise(ValueError("axis '%s' must exist."%a)) for a in mustexist)
-    consume(axes.count(a)==1 or _raise(ValueError("axis '%s' occurs more than once."%a)) for a in axes)
+    consume(
+        a in allowed
+        or _raise(
+            ValueError("invalid axis '%s', must be one of %s." % (a, list(allowed)))
+        )
+        for a in axes
+    )
+    disallowed is None or consume(
+        a not in disallowed or _raise(ValueError("disallowed axis '%s'." % a))
+        for a in axes
+    )
+    mustexist is None or consume(
+        a in axes or _raise(ValueError("axis '%s' must exist." % a)) for a in mustexist
+    )
+    consume(
+        axes.count(a) == 1 or _raise(ValueError("axis '%s' occurs more than once." % a))
+        for a in axes
+    )
 
-    return (axes,allowed) if return_allowed else axes
+    return (axes, allowed) if return_allowed else axes
+
 
 def axes_dict_datasize(axes, datasize):
     """
     from axes string to dict of datasize
     """
-    axes, allowed = axes_check_and_normalize(axes,return_allowed=True)
-    axes_dict = { a: 1 if axes.find(a) == -1 else datasize[axes.find(a)] for a in allowed }
+    axes, allowed = axes_check_and_normalize(axes, return_allowed=True)
+    axes_dict = {
+        a: 1 if axes.find(a) == -1 else datasize[axes.find(a)] for a in allowed
+    }
     return axes_dict, list(axes_dict.values())
 
+
 def structure_axes(axes):
-    return {a:axes[a] for a in ('T', 'Z', 'Y', 'X') if a in axes}
+    return {a: axes[a] for a in ("T", "Z", "Y", "X") if a in axes}

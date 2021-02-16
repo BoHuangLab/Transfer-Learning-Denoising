@@ -1,3 +1,5 @@
+# from https://github.com/czbiohub/noise2self/blob/master/models/babyunet.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,16 +13,20 @@ class BabyUnet(nn.Module):
         self.pool1 = nn.MaxPool2d(kernel_size=2)
         self.pool2 = nn.MaxPool2d(kernel_size=2)
 
-        self.up1 = lambda x: F.interpolate(x, mode='bilinear', scale_factor=2, align_corners=False)
-        self.up2 = lambda x: F.interpolate(x, mode='bilinear', scale_factor=2, align_corners=False)
+        self.up1 = lambda x: F.interpolate(
+            x, mode="bilinear", scale_factor=2, align_corners=False
+        )
+        self.up2 = lambda x: F.interpolate(
+            x, mode="bilinear", scale_factor=2, align_corners=False
+        )
 
         self.conv1 = ConvBlock(n_channel_in, width)
-        self.conv2 = ConvBlock(width, 2*width)
+        self.conv2 = ConvBlock(width, 2 * width)
 
-        self.conv3 = ConvBlock(2*width, 2*width)
+        self.conv3 = ConvBlock(2 * width, 2 * width)
 
-        self.conv4 = ConvBlock(4*width, 2*width)
-        self.conv5 = ConvBlock(3*width, width)
+        self.conv4 = ConvBlock(4 * width, 2 * width)
+        self.conv5 = ConvBlock(3 * width, width)
 
         self.conv6 = nn.Conv2d(width, n_channel_out, 1)
 

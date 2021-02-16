@@ -1,11 +1,14 @@
+#from https://github.com/czbiohub/noise2self/blob/master/mask.py
+
 import numpy as np
 import torch
 
-
-class Masker():
+class Masker:
     """Object for masking and demasking"""
 
-    def __init__(self, width=3, mode='zero', infer_single_pass=False, include_mask_as_input=False):
+    def __init__(
+        self, width=3, mode="zero", infer_single_pass=False, include_mask_as_input=False
+    ):
         self.grid_size = width
         self.n_masks = width ** 2
 
@@ -25,13 +28,13 @@ class Masker():
 
         mask_inv = torch.ones(mask.shape).to(X.device) - mask
 
-        if self.mode == 'interpolate':
+        if self.mode == "interpolate":
             masked = interpolate_mask(X, mask, mask_inv)
-        elif self.mode == 'zero':
+        elif self.mode == "zero":
             masked = X * mask_inv
         else:
             raise NotImplementedError
-            
+
         if self.include_mask_as_input:
             net_input = torch.cat((masked, mask.repeat(X.shape[0], 1, 1, 1)), dim=1)
         else:
@@ -46,7 +49,9 @@ class Masker():
 
         if self.infer_single_pass:
             if self.include_mask_as_input:
-                net_input = torch.cat((X, torch.zeros(X[:, 0:1].shape).to(X.device)), dim=1)
+                net_input = torch.cat(
+                    (X, torch.zeros(X[:, 0:1].shape).to(X.device)), dim=1
+                )
             else:
                 net_input = X
             net_output = model(net_input)
@@ -70,7 +75,7 @@ def pixel_grid_mask(shape, patch_size, phase_x, phase_y):
     A = torch.zeros(shape[-2:])
     for i in range(shape[-2]):
         for j in range(shape[-1]):
-            if (i % patch_size == phase_x and j % patch_size == phase_y):
+            if i % patch_size == phase_x and j % patch_size == phase_y:
                 A[i, j] = 1
     return torch.Tensor(A)
 
