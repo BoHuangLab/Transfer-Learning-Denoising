@@ -43,7 +43,7 @@ Pretrained models can be found in ```Self-Supervised Training with Noise2Self/no
 
 ### Other Applications
 
-We suggest taking a similar approach to our paper when denoising in your applications. Using ```FMD_epoch50_model```, continue to train with noisy and clean image pairs from your specific domain.
+We suggest taking a similar approach to our paper when denoising in your applications. Using ```FMD_epoch50_model```, continue to train with noisy and clean image pairs from your specific domain. We saw great success using the [noise2self](https://github.com/czbiohub/noise2self) method of masked image-pairing for task-specific denoising. See the paper and the noise2self code for more details.
 
 ## Contact
 
