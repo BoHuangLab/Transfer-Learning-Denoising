@@ -6,9 +6,9 @@
 
 # Image denoising for fluorescence microscopy by self-supervised transfer learning
 
-## Overview
-
 ![Denoised Cell Image](Images/preview.png)
+
+## Overview
 
 This repo contains code used for the timeUnet neural network. Based on the [Unet](https://arxiv.org/abs/1505.04597) architecture, this model was designed to denoise signal-dependent [Poisson Noise](https://en.wikipedia.org/wiki/Shot_noise), the largest source of noise in cellular-level fluorescence microscopy.
 
