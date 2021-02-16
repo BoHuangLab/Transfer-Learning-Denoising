@@ -47,7 +47,7 @@ We suggest taking a similar approach to our paper when denoising in your applica
 
 ## Contact
 
-Questions/concerns should be initiated via Issues. For ideas/potential collaborations/etc. feel free to reach out at [bo.huang@ucsf.edu](bo.huang@ucsf.edu). See our [website](huanglab.ucsf.edu) for information about other projects.
+Questions/concerns should be initiated via Issues. For ideas/potential collaborations/etc. feel free to reach out at [bo.huang@ucsf.edu](mailto:bo.huang@ucsf.edu). See our [website](http://huanglab.ucsf.edu) for information about other projects.
 
 ## Acknowledgments
 
