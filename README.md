@@ -39,7 +39,12 @@ The code was developed using the following dependencies. Mileage may vary with f
 Pretrained models can be found in ```Self-Supervised Training with Noise2Self/notebooks/trained_models/```. This folder contains 2 pretrained models which can be used:
 
 - ```FMD_epoch50_model```: Model trained on the entire FMD dataset, containing 50 frames for 240 field-of-views. Synthetically generated noisy images were also generated for training.
-- ```MT_simulation_iter1000_model```: Refined FMD model specificaly denoising microtubule images. Training was performed on masked high signal-to-noise confocal microtubule images with synthetic noise applied.
+- ```MT_simulation_iter1000_model_trained```: Refined FMD model specificaly denoising microtubule images. Training was performed on masked high signal-to-noise confocal microtubule images with synthetic noise applied.
+
+### Demos
+
+- Training: Run ```Self-Supervised Training with Noise2Self/notebooks/Selfsupervision comparison on peak signal.ipynb``` for a demonstration of fine-tune training for lysosome denoising
+- Evaluation: Run ```Denoising Demo.ipynb``` to evaluate denoising against FMD trained and transfer-learning trained models.
 
 ### Other Applications
 
