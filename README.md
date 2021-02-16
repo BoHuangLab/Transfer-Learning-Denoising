@@ -1,6 +1,6 @@
 <p>
 <center>
-<img src="Images/logo.png" align="middle" width="1200">
+<img src="Images/huanglogo.png" align="middle" width="1200">
   </center>
 </p>
 
