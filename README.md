@@ -20,7 +20,7 @@ The network was initially trained on the [Fluorescence Microscopy Dataset (FMD)]
 
 ### Prerequisites
 
-The code was developed using the following dependencies. Mileage may vary with future version, especially with future versions of [Keras](https://www.pyimagesearch.com/2019/10/21/keras-vs-tf-keras-whats-the-difference-in-tensorflow-2-0/) and [TensorFlow](https://www.tensorflow.org/guide/effective_tf2).
+The code was developed using the following dependencies. Mileage may vary with future version, especially with [future versions of Keras](https://www.pyimagesearch.com/2019/10/21/keras-vs-tf-keras-whats-the-difference-in-tensorflow-2-0/), [as well as TensorFlow](https://www.tensorflow.org/guide/effective_tf2).
 
 - ```Python==3.6```
 - ```Keras==2.2.4```
