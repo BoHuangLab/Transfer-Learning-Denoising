@@ -14,7 +14,7 @@ This repo contains code used for the timeUnet neural network. Based on the [Unet
 
 ![timeUnet Architecture](Images/architecture.png)
 
-The network was initially trained on the [Fluorescence Microscopy Dataset (FMD)](https://curate.nd.edu/show/und:f4752f78z6t). In our study, further tuning is done by training on application specific data.
+The network was initially trained on the [Fluorescence Microscopy Dataset (FMD)](https://curate.nd.edu/show/und:f4752f78z6t). In our study, further tuning is done by training on application specific data. Pixel masking, as see in [noise2self](https://github.com/czbiohub/noise2self) was also explored to produce even better denoising results.
 
 ## Getting Started
 
@@ -39,11 +39,11 @@ The code was developed using the following dependencies. Mileage may vary with f
 Pretrained models can be found in ```Self-Supervised Training with Noise2Self/notebooks/trained_models/```. This folder contains 2 pretrained models which can be used:
 
 - ```FMD_epoch50_model```: Model trained on the entire FMD dataset, containing 50 frames for 240 field-of-views. Synthetically generated noisy images were also generated for training.
-- ```MT_simulation_iter1000_model```: Refined FMD model specificaly denoising microtubule images. Training was performed on high signal-to-noise confocal microtubule images with synthetic noise applied.
+- ```MT_simulation_iter1000_model```: Refined FMD model specificaly denoising microtubule images. Training was performed on masked high signal-to-noise confocal microtubule images with synthetic noise applied.
 
 ### Other Applications
 
-We suggest taking a similar approach to our paper when denoising in your applications. Using ```FMD_epoch50_model```, continue to train with noisy and clean image pairs from your specific domain. We saw great success using the [noise2self](https://github.com/czbiohub/noise2self) method of masked image-pairing for task-specific denoising. See the paper and the noise2self code for more details.
+We suggest taking a similar approach to our paper when denoising in your applications. Using ```FMD_epoch50_model```, continue to train with noisy and clean image pairs from your specific domain. We saw great success using the noise2self method of masked image-pairing for task-specific denoising. See the paper and the noise2self code for more details.
 
 ## Contact
 
